@@ -120,3 +120,36 @@ class(left_join4)
 inner_join1 = north_america %>%
   inner_join(wb_north_america, by = c("iso_a2", "name_long" = "name"))
 inner_join1$name_long # only US and Canada
+
+# create new fields by dividing one by another
+data("world")
+world_new = world # new table so we don't overwrite original
+world_new$pop_dens = world_new$pop /world_new$area_km2
+
+# alternative dplyr (tidyworld) function exist
+mut_world = world %>%
+  mutate(pop_dens = pop / area_km2) # adds new column at end
+class(mut_world)
+
+trans_world = world %>%
+  transmute(pop_dens = pop / area_km2) # just the new column, plus geom
+class(trans_world)
+
+uni_world = world %>% # merge 2 fields
+  unite("con_reg", continent:region_un, sep = " : ", remove = TRUE)
+class(uni_world)
+
+world_separate = uni_world %>% # split a field based on a divider
+  separate(con_reg, c("continent", "region_un", sep = " : "))
+
+rename_world = world %>%
+  rename(name = name_long) # rename a field
+
+new_names = c("ISO_A2", "Name", "Continent", "Region", "Subregion","Country_Type", "Area_in_km2", "Population", "Life_Expectancy", "GDP_per_capita", "geom")
+new_name_world = world %>%
+  set_names(new_names) # use an array to bulk change field names
+
+world_data = world %>% # supposed to remove geometry but doesn't work'
+  st_set_geometry(NULL)
+class(world_data)
+
