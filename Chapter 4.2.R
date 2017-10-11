@@ -73,3 +73,50 @@ joined = st_join(x = asia, y = urb, left = FALSE) # inner join
 joined[!is.na(joined$population_millions),]
 plot(joined["population_millions"])
 
+# Aggregating/dissolving
+
+regions = aggregate(x = us_states[, "total_pop_15"], by = list(us_states$REGION), FUN = sum, na.rm = TRUE)
+par(mfrow = c(1, 2))
+plot(us_states[, "total_pop_15"], main = "US states") # original data
+plot(regions[, "total_pop_15"], main = "US regions") # aggregated data
+
+# Tidyverse version
+group_by(us_states, REGION) %>%
+  summarize(sum(pop = total_pop_15, na.rrm = TRUE))
+
+# aggregate buffer using Africa data. (many issues, better to do proportion sum)
+buff_agg = aggregate(x = africa[, "pop"], by = buff, FUN = sum)
+plot(buff_agg)
+plot(africa["pop"], add = TRUE)
+
+# Area weighted interpolation i.e. proportion sum
+buff_agg_aw = st_interpolate_aw(x = africa["pop"], to = buff, extensive = TRUE)
+
+b = st_sfc(st_point(c(0, 1)), st_point(c(1, 1))) # create 2 points
+b = st_buffer(b, dist = 1) # convert points to circles
+l = c("x", "y")
+plot(b)
+text(x = c(-0.5, 1.5), y = 1, labels = l) # add text
+
+# select various areas of overlap
+x = b[1]
+y = b[2]
+x_and_y = st_intersection(x, y)
+x_and_y = st_difference(y, x) # y that doesn't overlap x
+x_and_y = st_difference(x, y) # x that doesn't overlap y
+x_and_y = st_union(x, y) # all of x and y i.e union
+x_and_y = st_sym_difference(x, y) # everything but overlap
+x_and_y = st_intersection(x, y)
+plot(b)
+plot(x_and_y, col = "lightgrey", add = TRUE) # colour intersecting area
+
+bb = st_bbox(st_union(x, y))
+pmat = matrix(c(bb[c(1, 2, 3, 2, 3, 4, 1, 4, 1, 2)]), ncol = 2, byrow = TRUE)
+box = st_polygon(list(pmat))
+set.seed(2017)
+p = st_sample(x = box, size = 10)
+plot(box)
+plot(x, add = TRUE)
+plot(y, add = TRUE)
+plot(p, add = TRUE)
+text(x = c(-0.5, 1.5), y = 1, labels = l)
